@@ -1,0 +1,22 @@
+FROM node:8-jessie-slim as node-build
+WORKDIR /app
+COPY ./flask-app .
+
+RUN npm install
+RUN npm run build
+
+FROM alpine:latest as production
+WORKDIR /app
+COPY ./flask-app/templates ./templates
+COPY ./flask-app/app.py ./app.py
+COPY ./flask-app/requirements.txt ./requirements.txt
+COPY --from=node-build /app/static/build ./static/build
+
+RUN apk add --update python
+RUN apk add --update py-pip
+
+RUN pip install -r requirements.txt
+
+EXPOSE 5000
+
+CMD python ./app.py
